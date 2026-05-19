@@ -1,97 +1,118 @@
 import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
-import numpy as np
 
-# ---------------- Page Config ----------------
+# PAGE CONFIG
 st.set_page_config(
-    page_title="Crack Detection System",
-    page_icon="🏗️",
-    layout="centered"
+    page_title="AI Crack Detection",
+    page_icon="🛣️",
+    layout="wide"
 )
 
-# ---------------- Load Model (cached) ----------------
-@st.cache_resource
-def load_model():
-    return YOLO("best.pt")
-
-model = load_model()
-
-# ---------------- UI Styling ----------------
+# CUSTOM CSS
 st.markdown("""
 <style>
+
 .stApp {
-    background-color: #F5F7FA;
+    background-color: #0E1117;
 }
 
-/* Title */
 h1 {
-    color: #1F4E79;
+    color: #00BFA6;
     text-align: center;
-    font-size: 42px;
-    font-weight: 700;
+    font-size: 50px;
 }
 
-/* Upload Box */
-.stFileUploader {
-    border: 2px dashed #1F77B4;
-    padding: 20px;
-    border-radius: 12px;
-    background-color: white;
-}
-
-/* Button */
-.stButton>button {
-    background-color: #1F77B4;
+h3 {
     color: white;
-    border-radius: 8px;
+}
+
+.stFileUploader {
+    border: 2px dashed #00BFA6;
+    padding: 20px;
+    border-radius: 15px;
+    background-color: #262730;
+}
+
+.stButton>button {
+    background-color: #00BFA6;
+    color: white;
+    border-radius: 10px;
     height: 3em;
     width: 100%;
-    font-size: 16px;
-    border: none;
+    font-size: 18px;
 }
 
-/* Result Box */
 .result-box {
     padding: 20px;
-    border-radius: 12px;
-    background-color: white;
+    border-radius: 15px;
+    background-color: #262730;
+    color: white;
     text-align: center;
-    font-size: 20px;
-    box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+    font-size: 24px;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #DCE6F2;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- App Title ----------------
-st.title("Crack Detection System 🏗️")
+# TITLE
+st.title("🛣️ AI-Based Road Crack Detection System")
 
-st.write("Upload an image of a structure and detect cracks using AI.")
+st.markdown("""
+<div class="result-box">
+Final Year Project using YOLOv8 and Streamlit
+</div>
+""", unsafe_allow_html=True)
 
-# ---------------- File Upload ----------------
-uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
+st.write("")
 
-# ---------------- Prediction ----------------
+# SIDEBAR
+st.sidebar.title("Project Information")
+st.sidebar.info("""
+This AI model detects:
+- Cracks
+- Potholes
+- Road Damage
+
+Developed using:
+- YOLOv8
+- Streamlit
+- Python
+""")
+
+# LOAD MODEL
+@st.cache_resource
+def load_model():
+    model = YOLO("best.pt")
+    return model
+
+model = load_model()
+
+# FILE UPLOADER
+uploaded_file = st.file_uploader(
+    "Upload Road Image",
+    type=["jpg", "png", "jpeg"]
+)
+
+# PROCESS IMAGE
 if uploaded_file is not None:
+
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    # Convert image for model
-    img_array = np.array(image)
+    col1, col2 = st.columns(2)
 
-    # Run prediction
-    results = model.predict(img_array)
+    with col1:
+        st.subheader("Uploaded Image")
+        st.image(image, use_container_width=True)
 
-    # Display result
-    st.markdown("### Result")
+    with st.spinner("Analyzing pavement condition..."):
 
-    # Simple output logic (you can improve based on your model)
-    if len(results[0].boxes) > 0:
-        st.success("Crack Detected ⚠️")
-    else:
-        st.success("No Crack Detected ✅")
+        results = model(image)
+
+        result_img = results[0].plot()
+
+    with col2:
+        st.subheader("Detection Result")
+        st.image(result_img, use_container_width=True)
+
+    st.success("Detection Completed Successfully")
